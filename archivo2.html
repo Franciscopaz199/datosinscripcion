@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Inscritos</title>
+    <!-- Enlace a Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Enlace a Google Fonts para la fuente Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Aplicar la fuente Roboto globalmente */
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        /* Personalización de la opacidad de las secciones */
+        .container {
+            background-color: rgba(31, 41, 55, 0.7); /* Fondo oscuro con opacidad */
+        }
+        table {
+            background-color: rgba(31, 41, 55, 0.9); /* Fondo oscuro de la tabla */
+        }
+        th, td {
+            color: #fbbf24; /* Color amarillo oscuro */
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-300">
+
+    <div class="container max-w-4xl w-full p-8 rounded-lg shadow-lg mx-auto mt-10 bg-opacity-70">
+        <h1 class="text-3xl font-semibold text-yellow-400 mb-6">Cantidad de Personas Inscritas</h1>
+        <p id="total" class="text-xl font-bold text-yellow-500 mb-8">Cargando...</p>
+
+        <table id="inscritos" class="min-w-full table-auto rounded-lg">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left bg-gray-800 text-yellow-400">Nombre Completo</th>
+                    <th class="px-4 py-2 text-left bg-gray-800 text-yellow-400">Numero de Camisa</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-300">
+                <!-- Las filas serán insertadas dinámicamente aquí -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Reemplaza con el ID de tu hoja de Google Sheets
+        const SHEET_ID = "1Hd3LGl3QAOunQ1H6GZAKY8kV0pq96jfhye81OSSPFqQ"; 
+    
+        // Reemplaza con tu API Key de Google
+        const API_KEY = "AIzaSyDoENSyM41OmaDFFTDe7gTa08vuz5MTz38";  // Usa tu propia API Key
+    
+        async function cargarDatos() {
+            // Construir la URL de la API para obtener los datos de la hoja
+            const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:F?key=${API_KEY}`;
+    
+            try {
+                // Hacer la solicitud a la API
+                const response = await fetch(sheetUrl);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                
+                // Obtener los datos de la hoja
+                const data = await response.json();
+    
+                // Contar las filas, excluyendo la de los títulos
+                const filas = data.values ? data.values.slice(1) : [];
+    
+                // Mostrar el total de personas inscritas
+                document.getElementById("total").innerText = `Total de personas inscritas: ${filas.length}`;
+    
+                // Crear un objeto para contar las repeticiones de los números de camisa
+                const contadorCamisas = {};
+    
+                // Insertar las filas en la tabla
+                const tabla = document.getElementById("inscritos").getElementsByTagName("tbody")[0];
+                filas.forEach(fila => {
+                    const tr = document.createElement("tr");
+                    const tdNombre = document.createElement("td");
+                    tdNombre.textContent = fila[1];  // Nombre Completo
+                    tdNombre.classList.add("px-4", "py-2", "bg-gray-800", "text-yellow-500");
+    
+                    const numeroCamisa = fila[4];  // Numero de Camisa
+    
+                    // Contar cuántas veces aparece el número de camisa
+                    if (!contadorCamisas[numeroCamisa]) {
+                        contadorCamisas[numeroCamisa] = 0;
+                    }
+                    contadorCamisas[numeroCamisa]++;
+    
+                    const tdCamisa = document.createElement("td");
+                    tdCamisa.classList.add("px-4", "py-2", "bg-gray-800", "text-yellow-500");
+    
+                    // Si es una repetición, agregar el mensaje en rojo
+                    if (contadorCamisas[numeroCamisa] > 1) {
+                        tdCamisa.innerHTML = `${numeroCamisa} <span class="text-red-500">(CAMBIAR NUMERO DE CAMISA)</span>`;
+                    } else {
+                        tdCamisa.textContent = numeroCamisa;
+                    }
+    
+                    tr.appendChild(tdNombre);
+                    tr.appendChild(tdCamisa);
+                    tabla.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Error al leer la hoja:", error);
+                document.getElementById("total").innerText = "Error al obtener los datos.";
+            }
+        }
+    
+        // Llamar la función cuando se carga la página
+        window.onload = cargarDatos;
+    </script>
+    
+</body>
+</html>
